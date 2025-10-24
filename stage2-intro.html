@@ -25,7 +25,12 @@
 
     /* 等比縮放到 1366×1024 舞台 */
     .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;}
-    .fit{width:1366px;height:1024px;transform-origin:top left;transform:scale(calc(min(100vw/1366,100vh/1024)));}
+      .fit{
+  width:1366px;
+  height:1024px;
+  transform-origin: center center; /* ← 改這行 */
+transform: scale(calc(min(100vw/1366, (var(--vh, 1vh)*100)/1024)));
+}
 
     :root{ --bg:#ffffff; --text:#3b3f44; --muted:#6b7076; --pill:#bfefff; --pill-hover:#a8e6ff; }
     body{font-family:"Manrope","Noto Sans TC",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
@@ -45,6 +50,31 @@
     .cta:hover{background:var(--pill-hover);transform:translateY(-1px);box-shadow:0 7px 0 rgba(0,0,0,.12),0 14px 36px rgba(0,0,0,.08)}
     .cta:active{transform:translateY(1px);box-shadow:0 4px 0 rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06)}
   </style>
+  <style>
+  /* iPad / iOS Safari：避免 100vh 位移 */
+  .outer{ height: 100vh; } /* 先給舊機 fallback */
+  @supports (height: 100dvh) {
+    .outer{ height: 100dvh; } /* 新版 iOS / iPadOS 用 dvh */
+  }
+  /* 再準備一個 --vh 變數備援（超舊版 iOS 也穩）*/
+  .outer.use-vh-var{ height: calc(var(--vh, 1vh) * 100); }
+</style>
+<script>
+  // 讓極端情境下也穩：用 visualViewport 設定 --vh
+  (function(){
+    function setVH(){
+      var h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+      document.documentElement.style.setProperty('--vh', (h * 0.01) + 'px');
+    }
+    setVH();
+    window.addEventListener('resize', setVH);
+    window.addEventListener('orientationchange', setVH);
+    // 給 .outer 一個 class 以啟用備援
+    addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.outer').forEach(n => n.classList.add('use-vh-var'));
+    });
+  })();
+</script>
 </head>
 <body>
   <div class="outer">
