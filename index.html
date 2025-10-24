@@ -27,21 +27,15 @@
     input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
 
     /* 外層容器佔滿螢幕（固定定位，避免 100vh/dvh 落差） */
-    .outer{width:100vw;height:100vh;overflow:auto;display:flex;justify-content:center;align-items:center;}
+    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;background:#fff;}
 
     /* —— 舞台（基準 1024×768），由 JS 等比縮放置中 —— */
     .stage.fit{
-      width:1024px;  /* ← 基準寬 */
-      height:768px;  /* ← 基準高 */
-      position:relative; left:auto; top:auto;
-       /* scale 由 JS 動態帶入 */
-                     /* 以左上角作為縮放原點 */
-      background:#ffffff;
-    }
-  max-width:100%;
-  max-height:100%;
+  width:1366px;
+  height:1024px;
+  transform-origin:center center;
+  transform:scale(calc(min(100vw/1366, (var(--vh, 1vh)*100)/1024)));
 }
-
 
     /* 視覺設定 */
     :root{
@@ -51,7 +45,7 @@
       --button-hover:#a8e6ff;
     }
     .center-wrap{
-      position:relative;left:50%;top:50%;transform:translate(-50%,-50%);
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
       text-align:center;width:min(90%,820px);
     }
     h1{ margin:0 0 20px; font-weight:800; letter-spacing:0.4px; font-size:42px; }
@@ -75,18 +69,14 @@
       box-shadow:0 4px 0 rgba(0,0,0,0.12),0 8px 20px rgba(0,0,0,0.06);
     }
   </style>
-</head>
+<style>
+  /* iPad / iOS Safari：避免 100vh 位移 */
+  .outer{ height: 100vh; } /* fallback */
+  @supports (height: 100dvh) {
+    .outer{ height: 100dvh; }
+  }
+  .outer.use-vh-var{ height: calc(var(--vh, 1vh) * 100); }
+</style>
 
-<body>
-  <div class="outer">
-    <div class="stage fit" role="main" aria-label="心理測驗封面">
-      <div class="center-wrap">
-        <h1>What’s in Your Hand?</h1>
-        <p class="subtitle">你的手語名字是甚麼？</p>
-        <a class="cta" href="next.html" aria-label="進入世界">進入世界</a>
-      </div>
-    </div>
-  </div>
-
-  </body>
+</body>
 </html>
