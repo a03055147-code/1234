@@ -19,19 +19,32 @@
 
   <style>
     /* —— 全站沉浸式設定 —— */
-    html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:none;background:#ffffff;color:#3b3f44;}
+    html,body{
+      height:100%;margin:0;overscroll-behavior:none;touch-action:none;
+      background:#ffffff;color:#3b3f44;
+    }
     *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
     input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
 
-    /* 外層容器：滿版置中 */
-    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;}
+    /* 外層容器佔滿螢幕（固定定位，避免 100vh/dvh 落差） */
+    .outer{
+      position:fixed; inset:0; overflow:hidden; display:block;
+      padding:
+        env(safe-area-inset-top)
+        env(safe-area-inset-right)
+        env(safe-area-inset-bottom)
+        env(safe-area-inset-left);
+      box-sizing:border-box;
+    }
 
-    /* 舞台縮放到 1366×1024，改以中心為原點 + 使用 --vh 修正 iOS 的 100vh 問題 */
-    .fit{
-      width:1024px;
-      height:768px;
-      transform-origin:center center;
-      transform: scale(calc(min(100vw/1366, (var(--vh, 1vh) * 100)/1024)));
+    /* —— 舞台（基準 1024×768），由 JS 等比縮放置中 —— */
+    .stage.fit{
+      width:1024px;  /* ← 基準寬 */
+      height:768px;  /* ← 基準高 */
+      position:absolute; left:50%; top:50%;
+      transform:translate(-50%,-50%) scale(1); /* scale 由 JS 動態帶入 */
+      transform-origin:top left;               /* 以左上角作為縮放原點 */
+      background:#ffffff;
     }
 
     /* 視覺設定 */
@@ -41,86 +54,31 @@
       --button:#bfefff;
       --button-hover:#a8e6ff;
     }
-
-    .stage{width:1366px;height:1024px;position:relative;background:var(--bg);}
     .center-wrap{
       position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
       text-align:center;width:min(90%,820px);
     }
-
-    h1{
-      margin:0 0 20px;
-      font-weight:800;
-      letter-spacing:0.4px;
-      font-size:48px;
-    }
+    h1{ margin:0 0 20px; font-weight:800; letter-spacing:0.4px; font-size:42px; }
     .subtitle{
       font-family:"Noto Sans TC","Manrope",sans-serif;
-      font-weight:900;
-      margin:0 0 44px;
-      line-height:1.2;
-      font-size:36px;
+      font-weight:900; margin:0 0 40px; line-height:1.2; font-size:30px;
     }
-
     .cta{
-      display:inline-block;
-      padding:18px 36px;
-      border-radius:18px;
-      background:var(--button);
-      color:#1f2a33;
-      text-decoration:none;
-      font-weight:900;
-      font-size:28px;
-      font-family:"Noto Sans TC",sans-serif;
+      display:inline-block; padding:16px 30px; border-radius:16px;
+      background:var(--button); color:#1f2a33; text-decoration:none;
+      font-weight:900; font-size:24px; font-family:"Noto Sans TC",sans-serif;
       box-shadow:0 6px 0 rgba(0,0,0,0.12),0 12px 32px rgba(0,0,0,0.06);
       transition:transform .08s ease,background .15s ease,box-shadow .15s ease;
     }
     .cta:hover{
-      background:var(--button-hover);
-      transform:translateY(-1px);
+      background:var(--button-hover); transform:translateY(-1px);
       box-shadow:0 7px 0 rgba(0,0,0,0.12),0 14px 36px rgba(0,0,0,0.08);
     }
     .cta:active{
       transform:translateY(1px);
       box-shadow:0 4px 0 rgba(0,0,0,0.12),0 8px 20px rgba(0,0,0,0.06);
     }
-
-    /* iPad 安全區（可留著，避免 Home bar / 瀏海誤差） */
-    .outer{
-      padding:
-        env(safe-area-inset-top)
-        env(safe-area-inset-right)
-        env(safe-area-inset-bottom)
-        env(safe-area-inset-left);
-      box-sizing:border-box;
-    }
   </style>
-
-  <style>
-    /* iPad / iOS Safari：避免 100vh 位移 */
-    .outer{ height: 100vh; } /* 先給舊機 fallback */
-    @supports (height: 100dvh) {
-      .outer{ height: 100dvh; } /* 新版 iOS / iPadOS 用 dvh */
-    }
-    /* 再準備一個 --vh 變數備援（超舊版 iOS 也穩）*/
-    .outer.use-vh-var{ height: calc(var(--vh, 1vh) * 100); }
-  </style>
-  <script>
-    // 用 visualViewport 取得真實可視高，寫入 --vh，旋轉/工具列收放都會更新
-    (function(){
-      function setVH(){
-        var h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-        document.documentElement.style.setProperty('--vh', (h * 0.01) + 'px');
-      }
-      setVH();
-      window.addEventListener('resize', setVH);
-      window.addEventListener('orientationchange', setVH);
-      // 啟用 .outer 的備援高度類別
-      addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.outer').forEach(n => n.classList.add('use-vh-var'));
-      });
-    })();
-  </script>
 </head>
 
 <body>
@@ -133,5 +91,28 @@
       </div>
     </div>
   </div>
+
+  <script>
+    (function(){
+      // 舞台基準尺寸（要再縮小/放大可改這裡，並同步改 CSS 的 width/height）
+      const BASE_W = 1024;
+      const BASE_H = 768;
+      const stage = document.querySelector('.stage.fit');
+
+      function fit(){
+        // 用 visualViewport 取得真實可視區，避開 iOS 100vh/dvh 的坑
+        const vw = window.visualViewport ? window.visualViewport.width  : window.innerWidth;
+        const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const scale = Math.min(vw / BASE_W, vh / BASE_H);
+        stage.style.transform = `translate(-50%,-50%) scale(${scale})`;
+      }
+
+      fit();
+      const vv = window.visualViewport;
+      if (vv) vv.addEventListener('resize', fit, {passive:true});
+      window.addEventListener('resize', fit, {passive:true});
+      window.addEventListener('orientationchange', fit, {passive:true});
+    })();
+  </script>
 </body>
 </html>
