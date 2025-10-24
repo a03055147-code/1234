@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <!-- iOS 全螢幕 / 加到主畫面 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="What's in Your Hand?">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- PWA manifest（你已經準備好了） -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- 防止誤縮放與邊界空白 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <title>What's in Your Hand?｜心理測驗封面</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* —— 全站沉浸式設定 —— */
+    html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:none;background:#ffffff;color:#3b3f44;}
+    *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
+
+    /* 自動縮放舞台至 1366×1024 */
+    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;}
+    .fit{width:1366px;height:1024px;transform-origin:top left;transform:scale(calc(min(100vw/1366,100vh/1024)));}
+
+    /* 視覺設定 */
+    :root{
+      --bg:#ffffff;
+      --text:#3b3f44;
+      --button:#bfefff;
+      --button-hover:#a8e6ff;
+    }
+
+    .stage{width:1366px;height:1024px;position:relative;background:var(--bg);}
+    .center-wrap{
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      text-align:center;width:min(90%,820px);
+    }
+
+    h1{
+      margin:0 0 20px;
+      font-weight:800;
+      letter-spacing:0.4px;
+      font-size:48px;
+    }
+    .subtitle{
+      font-family:"Noto Sans TC","Manrope",sans-serif;
+      font-weight:900;
+      margin:0 0 44px;
+      line-height:1.2;
+      font-size:36px;
+    }
+
+    .cta{
+      display:inline-block;
+      padding:18px 36px;
+      border-radius:18px;
+      background:var(--button);
+      color:#1f2a33;
+      text-decoration:none;
+      font-weight:900;
+      font-size:28px;
+      font-family:"Noto Sans TC",sans-serif;
+      box-shadow:0 6px 0 rgba(0,0,0,0.12),0 12px 32px rgba(0,0,0,0.06);
+      transition:transform .08s ease,background .15s ease,box-shadow .15s ease;
+    }
+    .cta:hover{
+      background:var(--button-hover);
+      transform:translateY(-1px);
+      box-shadow:0 7px 0 rgba(0,0,0,0.12),0 14px 36px rgba(0,0,0,0.08);
+    }
+    .cta:active{
+      transform:translateY(1px);
+      box-shadow:0 4px 0 rgba(0,0,0,0.12),0 8px 20px rgba(0,0,0,0.06);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="outer">
+    <div class="stage fit" role="main" aria-label="心理測驗封面">
+      <div class="center-wrap">
+        <h1>What’s in Your Hand?</h1>
+        <p class="subtitle">你的手語名字是甚麼？</p>
+        <a class="cta" href="next.html" aria-label="進入世界">進入世界</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

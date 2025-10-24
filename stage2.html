@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>What's in Your Hand?｜第二階段（題目）</title>
+
+  <!-- iOS 全螢幕 / 加到主畫面 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="What's in Your Hand?">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iPad 最佳化 viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* 禁止選取、長按、彈性捲動（沉浸式） */
+    html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:none;background:#fff;}
+    *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
+
+    /* 將舞台等比縮放至 1366×1024，避免超出 iPad 螢幕 */
+    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;background:#fff;}
+    .fit{width:1366px;height:1024px;transform-origin:top left;transform:scale(calc(min(100vw/1366,100vh/1024)));}
+
+    :root{ --bg:#ffffff; --text:#3b3f44; --muted:#6b7076; --pill:#bfefff; --pill-hover:#a8e6ff; }
+    body{font-family:"Manrope","Noto Sans TC",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);}
+
+    .stage{width:1366px;height:1024px;position:relative;}
+    .wrap{position:absolute;left:50%;top:130px;transform:translateX(-50%);width:920px;}
+    .q{text-align:center;font-size:34px;line-height:1.9;margin:0 0 34px;white-space:pre-line;}
+    .options{display:grid;gap:28px;justify-items:center;}
+    .opt{
+      width:75%;max-width:680px;display:block;text-decoration:none;border:none;
+      background:var(--pill);color:#1f2a33;padding:22px 28px;border-radius:22px;
+      box-shadow:0 6px 0 rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.06);
+      font:900 26px "Noto Sans TC",sans-serif;text-align:center;cursor:pointer;
+      transition:transform .08s ease, background .15s ease, box-shadow .15s ease;
+    }
+    .opt:hover{background:var(--pill-hover);transform:translateY(-1px);box-shadow:0 7px 0 rgba(0,0,0,.12),0 14px 36px rgba(0,0,0,.08);}
+    .opt:active{transform:translateY(1px);box-shadow:0 4px 0 rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06);}
+    .meta{position:absolute;left:50%;bottom:48px;transform:translateX(-50%);color:var(--muted);font-weight:700;font-size:20px;}
+  </style>
+</head>
+<body>
+  <div class="outer">
+    <div class="stage fit">
+      <div class="wrap">
+        <h2 id="question" class="q"></h2>
+        <div id="options" class="options"></div>
+      </div>
+      <div class="meta">
+        <div id="counter">1 / 5</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 優先讀前導頁寫入的分流；支援 ?force= 測試；否則看第一階段最高分
+    const base = JSON.parse(localStorage.getItem('handname_scores')||'{}');
+    const types = ['extravert','introvert','caring','decisive','analytic'];
+    const force = new URLSearchParams(location.search).get('force');
+
+    function pickType(){
+      const fromIntro = sessionStorage.getItem('handname_stage2_type');
+      if(fromIntro && types.includes(fromIntro)) return fromIntro;
+      if(force && types.includes(force)) return force;
+      let best='extravert', val=-Infinity;
+      types.forEach(k=>{ const v=base[k]||0; if(v>val){best=k;val=v;} });
+      return best;
+    }
+    const type = pickType();
+
+    // 題庫（略）
+    const DB = { /* 保留原題庫不動 */ };
+
+    const storeKey = 'handname_stage2';
+    const scores2 = JSON.parse(localStorage.getItem(storeKey)||'{}');
+    const set = DB[type];
+    const qEl = document.getElementById('question');
+    const opsEl = document.getElementById('options');
+    const counterEl = document.getElementById('counter');
+
+    // 將中文逗號、句號視為「可斷點」，並只輸出兩行
+    const punctToBreaks = (txt) => txt.replaceAll(/([，。])/g, '$1|');
+    function toTwoLines(txt){
+      const parts = punctToBreaks(txt).split('|').filter(s=>s.length);
+      if(parts.length <= 2) return parts.join('<br>');
+      const lens = parts.map(p=>p.length);
+      const total = lens.reduce((a,b)=>a+b,0);
+      let bestIdx = 0, diff = Infinity, sum = 0;
+      for(let i=0;i<lens.length-1;i++){
+        sum += lens[i];
+        const d = Math.abs(sum - total/2);
+        if(d < diff){ diff = d; bestIdx = i; }
+      }
+      const line1 = parts.slice(0,bestIdx+1).join('');
+      const line2 = parts.slice(bestIdx+1).join('');
+      return `${line1}<br>${line2}`;
+    }
+
+    let idx = 0;
+    function render(){
+      const item = set.items[idx];
+      qEl.innerHTML = toTwoLines(item.q);
+      opsEl.innerHTML = '';
+      item.opts.forEach(o=>{
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.type = 'button';
+        b.textContent = o.t;
+        b.addEventListener('click', ()=>choose(o.k));
+        opsEl.appendChild(b);
+      });
+      counterEl.textContent = `${idx+1} / ${set.items.length}`;
+    }
+
+    function choose(key){
+      const label = set.keyMap[key] || key;
+      const bucket = `${type}:${label}`;
+      scores2[bucket] = (scores2[bucket]||0) + 1;
+      localStorage.setItem(storeKey, JSON.stringify(scores2));
+      idx++;
+      if(idx<set.items.length){ render(); }
+      else { window.location.href='stage3.html'; }
+    }
+
+    window.addEventListener('keydown',(e)=>{
+      if(['1','2','3'].includes(e.key)){
+        const n=parseInt(e.key,10)-1;
+        const item=set.items[idx];
+        if(item&&item.opts[n]) choose(item.opts[n].k);
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

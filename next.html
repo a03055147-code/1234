@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>What's in Your Hand?｜第二頁</title>
+
+  <!-- iOS 全螢幕 / 加到主畫面 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="What's in Your Hand?">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- 防止誤縮放與邊界空白 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* —— 全站沉浸式設定 —— */
+    html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:none;background:#ffffff;color:#3b3f44;}
+    *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
+
+    /* 自動縮放舞台至 1366×1024 */
+    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;}
+    .fit{width:1366px;height:1024px;transform-origin:top left;transform:scale(calc(min(100vw/1366,100vh/1024)));}
+
+    :root{
+      --bg:#ffffff;
+      --text:#3b3f44;
+      --button:#bfefff;
+      --button-hover:#a8e6ff;
+    }
+
+    .stage{width:1366px;height:1024px;position:relative;background:var(--bg);}
+    .text-block{
+      position:absolute;
+      top:18%; left:20%; right:20%;
+      font-family:"Noto Sans TC", sans-serif;
+      font-size:28px;
+      line-height:1.9;
+      font-weight:700;
+      color:var(--text);
+    }
+
+    .cta{
+      position:absolute;
+      right:80px;
+      bottom:80px;
+      display:inline-block;
+      padding:18px 36px;
+      border-radius:18px;
+      background:var(--button);
+      color:#1f2a33;
+      text-decoration:none;
+      font-weight:900;
+      font-size:28px;
+      font-family:"Noto Sans TC",sans-serif;
+      box-shadow:0 6px 0 rgba(0,0,0,0.12),0 12px 32px rgba(0,0,0,0.06);
+      transition:transform .08s ease,background .15s ease,box-shadow .15s ease;
+    }
+    .cta:hover{background:var(--button-hover);transform:translateY(-1px);box-shadow:0 7px 0 rgba(0,0,0,0.12),0 14px 36px rgba(0,0,0,0.08);}
+    .cta:active{transform:translateY(1px);box-shadow:0 4px 0 rgba(0,0,0,0.12),0 8px 20px rgba(0,0,0,0.06);}
+  </style>
+</head>
+
+<body>
+  <div class="outer">
+    <div class="stage fit">
+      <div class="text-block">
+        <p>你好！你手上的氣圍有點特別耶！你是新來的吧？<br>
+        我想向你介紹我的幾個朋友，<br>
+        他們超會看人（的手），</p>
+
+        <p>這裡的人，名字可不是用講的，<br>
+        而是⋯⋯用「手」取的。<br>
+        他們會觀察你的習慣、感覺或氣場，<br>
+        最後幫你取一個屬於你的「手語名字」。</p>
+
+        <p>「準備好了嗎？我們開始吧！」</p>
+      </div>
+      <a class="cta" href="page3.html">準備好了</a>
+    </div>
+  </div>
+</body>
+</html>

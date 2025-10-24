@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>What's in Your Hand?｜輸入資料</title>
+
+  <!-- iOS 全螢幕 / 加到主畫面 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="What's in Your Hand?">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- 防止誤縮放與邊界空白 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* —— 全站沉浸式設定 —— */
+    html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:none;background:#ffffff;color:#3b3f44;}
+    *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
+
+    /* 自動縮放舞台至 1366×1024 */
+    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;}
+    .fit{width:1366px;height:1024px;transform-origin:top left;transform:scale(calc(min(100vw/1366,100vh/1024)));}
+
+    :root{
+      --bg:#ffffff;
+      --text:#3b3f44;
+      --button:#bfefff;
+      --button-hover:#a8e6ff;
+    }
+
+    .stage{width:1366px;height:1024px;position:relative;background:var(--bg);}
+    .panel{position:absolute;left:50%;top:25%;transform:translateX(-50%);text-align:center;width:min(90%,680px)}
+    h2{font-weight:800;font-size:40px;margin:0 0 24px}
+
+    /* pill UI */
+    .pill{display:inline-flex;align-items:center;justify-content:center;padding:16px 28px;border-radius:20px;background:var(--button);color:#1f2a33;font-weight:900;font-size:28px;box-shadow:0 6px 0 rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.06)}
+    .pill-input{border:none;outline:none;background:transparent;font-family:"Noto Sans TC",sans-serif;font-weight:900;font-size:28px;color:#1f2a33;min-width:7em;text-align:center}
+
+    .row{margin:28px 0}
+    .label{font-family:"Noto Sans TC",sans-serif;font-weight:900;font-size:32px;margin-bottom:12px}
+
+    .btn{cursor:pointer;user-select:none;text-decoration:none}
+    .btn:hover{background:var(--button-hover)}
+    .btn:active{transform:translateY(1px);box-shadow:0 4px 0 rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06)}
+
+    .gender-wrap{display:flex;gap:28px;justify-content:center}
+    .gender-btn.active{outline:4px solid #5cc7ff}
+
+    .gogo{margin-top:40px;display:inline-block;}
+    .gogo[aria-disabled="true"]{opacity:.5;pointer-events:none}
+  </style>
+</head>
+
+<body>
+  <div class="outer">
+    <div class="stage fit">
+      <div class="panel">
+        <div class="row">
+          <div class="label">你叫甚麼名字呢？</div>
+          <div class="pill">
+            <input id="name" class="pill-input" type="text" placeholder="輸入名字" aria-label="輸入名字" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label">你的生理性別？</div>
+          <div class="gender-wrap">
+            <button class="pill btn gender-btn" data-gender="male" type="button">男</button>
+            <button class="pill btn gender-btn" data-gender="female" type="button">女</button>
+          </div>
+        </div>
+
+        <a id="gogo" class="pill btn gogo" href="#" aria-disabled="true">GOGO!</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const nameInput = document.getElementById('name');
+    const genderBtns = document.querySelectorAll('.gender-btn');
+    const gogo = document.getElementById('gogo');
+    let gender = '';
+
+    genderBtns.forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        genderBtns.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        gender = btn.dataset.gender;
+        updateCTA();
+      });
+    });
+
+    nameInput.addEventListener('input', updateCTA);
+
+    function updateCTA(){
+      const ok = nameInput.value.trim().length>0 && gender;
+      gogo.setAttribute('aria-disabled', ok? 'false':'true');
+      if(ok){
+        // 存進 localStorage，後續頁面可直接讀
+        const player = { name: nameInput.value.trim(), gender };
+        localStorage.setItem('handname_player', JSON.stringify(player));
+
+        // 也把資料帶進網址
+        const params = new URLSearchParams(player);
+        gogo.href = 'page4.html?' + params.toString();
+      }else{
+        gogo.href = '#';
+      }
+    }
+  </script>
+</body>
+</html>

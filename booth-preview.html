@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>拍貼｜模板預覽（自信女）</title>
+
+  <!-- iOS 全螢幕 / 加到主畫面 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="What's in Your Hand?">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iPad 最佳化 viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* —— 全站沉浸設定 —— */
+    html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:none;background:#fff;}
+    *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+
+    /* 等比縮放舞台到 1366×1024 */
+    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;background:#fff;}
+    .fit{width:1366px;height:1024px;transform-origin:top left;transform:scale(calc(min(100vw/1366,100vh/1024)));}
+
+    :root{--bg:#ffffff;--text:#3b3f44;--muted:#6b7076;--pill:#bfefff;--pill-hover:#a8e6ff;}
+    body{font-family:"Manrope","Noto Sans TC",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);}
+
+    .stage{width:1366px;height:1024px;position:relative;}
+    .wrap{
+      position:absolute;inset:0;
+      display:grid;
+      grid-template-columns:520px 1fr;
+      align-items:center;
+      padding-left:72px;
+      padding-right:72px;
+    }
+
+    .left h2{font-weight:900;font-size:36px;margin:0 0 12px;}
+    .left p{font-weight:900;font-size:32px;margin:0;}
+    .left p + p{margin-top:10px;}
+
+    .cta{
+      margin-top:36px;display:inline-block;padding:16px 36px;
+      border-radius:18px;background:var(--pill);color:#1f2a33;text-decoration:none;
+      font-weight:900;font-size:28px;
+      box-shadow:0 6px 0 rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.06);
+      transition:transform .08s ease, background .15s ease, box-shadow .15s ease;
+    }
+    .cta:hover{background:var(--pill-hover);transform:translateY(-1px);box-shadow:0 7px 0 rgba(0,0,0,.12),0 14px 36px rgba(0,0,0,.08);}
+    .cta:active{transform:translateY(1px);box-shadow:0 4px 0 rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06);}
+
+    .right{display:grid;place-items:center;}
+    .frame{
+      width:760px;height:820px;display:grid;place-items:center;
+    }
+    .frame img{
+      display:block;width:100%;height:auto;object-fit:contain;border-radius:6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="outer">
+    <div class="stage fit">
+      <div class="wrap">
+        <div class="left">
+          <h2>這是我們拍貼的模板</h2>
+          <p>沒錯！那就是我本人</p>
+          <p>快來跟我一起比自信女的手語吧！</p>
+          <a class="cta" href="booth-duo-ipad.html">走吧！</a>
+        </div>
+        <div class="right">
+          <figure class="frame">
+            <img src="心理測驗模板.jpg" alt="自信女拍貼模板預覽">
+          </figure>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 預設拍貼模板資料（自信女）
+    localStorage.setItem('photobooth_template', JSON.stringify({
+      role: '自信女',
+      image: '心理測驗模板.jpg'
+    }));
+  </script>
+</body>
+</html>

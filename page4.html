@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>What's in Your Hand?｜第一階段（1–5）</title>
+
+  <!-- iOS 全螢幕 / 加到主畫面 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="What's in Your Hand?">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- 防止誤縮放與邊界空白 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* —— 全站沉浸式設定 —— */
+    html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:none;background:#ffffff;color:#3b3f44;}
+    *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+    input,textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}
+
+    /* 自動縮放舞台至 1366×1024 */
+    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;}
+    .fit{width:1366px;height:1024px;transform-origin:top left;transform:scale(calc(min(100vw/1366,100vh/1024)));}
+
+    :root{--bg:#ffffff;--text:#3b3f44;--muted:#6b7076;--pill:#bfefff;--pill-hover:#a8e6ff;}
+    body{font-family:"Manrope","Noto Sans TC",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
+
+    .stage{width:1366px;height:1024px;position:relative;background:var(--bg);}
+    .wrap{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(1000px,88%)}
+
+    .lead{font:700 18px "Manrope",sans-serif;letter-spacing:.2px;color:var(--muted);text-align:center;margin:0 0 12px}
+    .q{font-weight:900;font-size:36px;text-align:center;margin:0 0 28px;white-space:pre-line;}
+
+    .options{display:grid;gap:26px}
+    .opt{display:block;text-decoration:none;border:none;background:var(--pill);color:#1f2a33;padding:22px 28px;border-radius:22px;
+      box-shadow:0 6px 0 rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.06);
+      font:900 26px "Noto Sans TC",sans-serif;text-align:center;cursor:pointer;
+      transition:transform .08s ease, background .15s ease, box-shadow .15s ease}
+    .opt:hover{background:var(--pill-hover);transform:translateY(-1px);box-shadow:0 7px 0 rgba(0,0,0,.12),0 14px 36px rgba(0,0,0,.08)}
+    .opt:active{transform:translateY(1px);box-shadow:0 4px 0 rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06)}
+
+    .meta{position:absolute;left:50%;bottom:48px;transform:translateX(-50%);width:min(1000px,88%);
+      display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-weight:700}
+    .progress{height:8px;background:#e8f6ff;border-radius:999px;overflow:hidden;flex:1;margin-left:16px}
+    .bar{height:100%;width:0;background:#8bd9ff}
+  </style>
+</head>
+
+<body>
+  <div class="outer">
+    <div class="stage fit">
+      <div class="wrap">
+        <p id="lead" class="lead"></p>
+        <h2 id="question" class="q"></h2>
+        <div id="options" class="options"></div>
+      </div>
+      <div class="meta">
+        <div id="counter">1 / 5</div>
+        <div class="progress" aria-hidden="true"><div id="bar" class="bar"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 第一階段題庫
+    const questions = [
+      {
+        lead: '你走進熱鬧的廣場，一位穿著五彩繽紛衣服的女孩朝你揮手。',
+        q: '「如果你的手也能穿衣服，你覺得它會穿什麼樣的衣服呢？」',
+        opts: [
+          {t:'輕便的露營裝，帶著實用的小口袋和背包，準備去探險。',k:'extravert'},
+          {t:'柔軟溫暖的毛衣，像雲朵一樣包裹手指。',k:'introvert'},
+          {t:'金屬扣環的俐落短外套，行動快速又輕盈。',k:'decisive'},
+        ]
+      },
+      {
+        lead: '繼續往前走，是一條安靜的小巷，一個戴著耳機的少年坐在階梯上，抬頭看著你。',
+        q: '「如果來到一個陌生的地方，你會先做出什麼行動？」',
+        opts: [
+          {t:'慢慢掃視週遭，拿起筆在手背紀錄每個細節。',k:'analytic'},
+          {t:'伸手觸碰牆面或地板，感受這裡的溫度與質地。',k:'caring'},
+          {t:'迫不及待想要認識新鮮的人事物',k:'extravert'},
+        ]
+      },
+      {
+        lead: '接著，你聽到前方有笑聲，一個背著超大背包的人朝你揮手。',
+        q: '「當你看到一個人正比著手語，動作卻有些慌亂，\n他似乎想說什麼，但沒有人懂他。這時你會怎麼做？」',
+        opts: [
+          {t:'先觀察他比的手勢與表情，推測意思後再小心地比出回應。',k:'introvert'},
+          {t:'微笑著用眼神建立交流，比出「沒事」和「慢慢來」。',k:'decisive'},
+          {t:'用手機輸入文字，幫他翻譯訊息。',k:'analytic'},
+        ]
+      },
+      {
+        lead: '你感覺有點餓了，走進一間餐廳，突然一位客人的湯灑在地上。服務生比出「停！」的手勢，示意大家別靠近。',
+        q: '「遇到這種狀況時，你會怎麼做？」',
+        opts: [
+          {t:'走向那位驚慌的客人，安撫他的情緒。',k:'caring'},
+          {t:'立刻拿抹布或叫店員過來，一邊清理一邊請其他人讓開。',k:'extravert'},
+          {t:'當作沒有看到，默默走掉',k:'introvert'},
+        ]
+      },
+      {
+        lead: '當你吃飽準備離開時，牆上的門突然變成三道了！而每個門上都有一個神祕的手語符號。',
+        q: '「請憑直覺，選出你想推開的那一道門吧。」',
+        opts: [
+          {t:'A門',k:'decisive'},
+          {t:'B門',k:'analytic'},
+          {t:'C門',k:'caring'},
+        ]
+      }
+    ];
+
+    const scoreKeys=['extravert','introvert','decisive','analytic','caring'];
+    const defaultScores={extravert:0,introvert:0,decisive:0,analytic:0,caring:0};
+
+    function getScores(){try{return JSON.parse(localStorage.getItem('handname_scores'))||{...defaultScores};}catch(e){return {...defaultScores};}}
+    function setScores(s){localStorage.setItem('handname_scores',JSON.stringify(s));}
+
+    let scores=getScores(),idx=0;
+    const leadEl=document.getElementById('lead');
+    const qEl=document.getElementById('question');
+    const opsEl=document.getElementById('options');
+    const counterEl=document.getElementById('counter');
+    const barEl=document.getElementById('bar');
+
+    function render(){
+      const item=questions[idx];
+      leadEl.textContent=item.lead;
+      qEl.textContent=item.q;
+      opsEl.innerHTML='';
+      item.opts.forEach(o=>{
+        const b=document.createElement('button');
+        b.className='opt';
+        b.type='button';
+        b.textContent=o.t;
+        b.addEventListener('click',()=>choose(o.k));
+        opsEl.appendChild(b);
+      });
+      counterEl.textContent=`${idx+1} / ${questions.length}`;
+      barEl.style.width=((idx)/questions.length*100)+'%';
+    }
+
+    function choose(key){
+      scores[key]=(scores[key]||0)+1;
+      setScores(scores);
+      idx++;
+      if(idx<questions.length){render();}
+      else{
+        barEl.style.width='100%';
+        window.location.href='stage2-intro.html';
+      }
+    }
+
+    // 快捷鍵：1/2/3
+    window.addEventListener('keydown',e=>{
+      if(['1','2','3'].includes(e.key)){
+        const n=parseInt(e.key,10)-1;
+        const item=questions[idx];
+        if(item&&item.opts[n])choose(item.opts[n].k);
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

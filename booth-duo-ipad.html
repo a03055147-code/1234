@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+
+
+  <!-- 全螢幕 & 主畫面圖示（iOS） -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="What's in Your Hand?" />
+  <link rel="apple-touch-icon" href="icon.png" />
+
+  <!-- Android / 其他平台 -->
+  <link rel="manifest" href="manifest.json" />
+
+  <title>拍貼｜iPad 版本（合照模式）</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* —— 全站沉浸式設定（防選取、防長按、防彈性捲動） —— */
+    html, body { overscroll-behavior:none; touch-action:none; background:#000; }
+    * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    body { overscroll-behavior: none; touch-action: none; font-family:"Noto Sans TC","Manrope",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+
+    /* —— 自動等比縮放到 1366×1024 —— */
+    .outer {
+      width: 100vw; height: 100vh; overflow: hidden;
+      display: grid; place-items: center;
+      background: #000;
+    }
+    .fit { transform-origin: top left; }
+    /* 用 CSS calc 自動算縮放比例： */
+    .fit { transform: scale(calc(min(100vw / 1366, 100vh / 1024))); }
+
+    /* 固定舞台 1366×1024（所有版面都塞進這個畫布） */
+    .stage { width:1366px; height:1024px; position:relative; overflow:hidden; background:#000; }
+
+    /* 相機預覽鋪滿舞台（鏡像顯示） */
+    video, canvas {
+      position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    }
+    video { transform: scaleX(-1); } /* 鏡像預覽 */
+
+    /* 左側角色固定位置（可依需求調整數字） */
+    .char {
+      position:absolute; left:68px; bottom:24px; width:520px;
+      pointer-events:none; image-rendering:auto;
+      filter: drop-shadow(0 8px 24px rgba(0,0,0,.25));
+    }
+
+    /* 引導、倒數、閃光 */
+    .badge{
+      position:absolute; left:68px; top:60px;
+      background:rgba(255,255,255,.85); color:#000;
+      padding:8px 14px; border-radius:999px; font-weight:800; font-size:14px; letter-spacing:.03em;
+    }
+    .tip{
+      position:absolute; left:68px; top:100px; width:520px;
+      color:#fff; font-weight:900; font-size:34px; line-height:1.5;
+      text-shadow:0 3px 16px rgba(0,0,0,.5);
+    }
+    .countdown{
+      position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
+      font-weight:900; font-size:140px; color:#fff; text-shadow:0 10px 40px rgba(0,0,0,.45);
+      opacity:0; transition:opacity .2s ease;
+    }
+    .flash{
+      position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .12s ease;
+    }
+    .show{opacity:1}
+
+    /* 啟動按鈕（只在第一次開鏡頭時顯示；iOS 需要使用者點擊觸發） */
+    .startBtn{
+      position:absolute; inset:0; margin:auto;
+      width:420px; height:120px; border:0; border-radius:16px;
+      background:rgba(255,255,255,.92); color:#000; font-weight:900; font-size:28px;
+    }
+  </style>
+</head>
+<body>
+  <div class="outer">
+    <div class="stage fit" id="stage">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="canvas" width="1920" height="1080" style="display:none"></canvas>
+
+      <!-- 角色：先動作1，拍完換動作2 -->
+      <img id="char" class="char" src="動作1.png" alt="角色">
+
+      <div class="badge">iPad 全螢幕模式</div>
+      <div class="tip" id="tip">請和角色一起擺出 <strong>動作 1</strong></div>
+      <div id="cd" class="countdown">3</div>
+      <div id="flash" class="flash"></div>
+
+      <button id="startBtn" class="startBtn">📸 開始拍攝</button>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const charImg = document.getElementById('char');
+    const tip = document.getElementById('tip');
+    const cd = document.getElementById('cd');
+    const flash = document.getElementById('flash');
+    const startBtn = document.getElementById('startBtn');
+
+    const poses = [
+      { img:'動作1.png', label:'動作 1' },
+      { img:'動作2.png', label:'動作 2' },
+    ];
+
+    let stream = null;
+    const shots = { one:null, two:null };
+
+    async function startCamera(){
+      try{
+        if(stream) stream.getTracks().forEach(t=>t.stop());
+        stream = await navigator.mediaDevices.getUserMedia({
+          video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:960} },
+          audio:false
+        });
+        video.srcObject = stream;
+      }catch(e){
+        alert('無法開啟相機：' + e.message);
+      }
+    }
+
+    const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+    async function countdown(){
+      for(let n=3;n>=1;n--){
+        cd.textContent = n;
+        cd.classList.add('show');
+        await sleep(900);
+        cd.classList.remove('show');
+        await sleep(100);
+      }
+    }
+
+    function capture(){
+      const vw = video.videoWidth, vh = video.videoHeight;
+      if(!vw || !vh) return null;
+
+      // 用相機原始解析度輸出，鏡像與預覽一致
+      canvas.width = vw; canvas.height = vh;
+      const ctx = canvas.getContext('2d');
+
+      // 先畫相機畫面（鏡像）
+      ctx.save(); ctx.translate(canvas.width,0); ctx.scale(-1,1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      // 再畫角色（舞台 1366×1024；char CSS: left:68, bottom:24, width:520）
+      const stageW=1366, stageH=1024;
+      const left=68, bottom=24, cssW=520;
+      const scaleX = vw / stageW, scaleY = vh / stageH;
+
+      const dw = cssW * scaleX;
+      const dh = charImg.naturalHeight * (dw / charImg.naturalWidth);
+      const dx = left * scaleX;
+      const dy = (vh - (bottom*scaleY) - dh);
+
+      // 因相機已鏡像，此處也鏡像畫角色，才能固定在「畫面左側」
+      ctx.save(); ctx.translate(canvas.width,0); ctx.scale(-1,1);
+      ctx.drawImage(charImg, dx, dy, dw, dh);
+      ctx.restore();
+
+      flash.classList.add('show');
+      setTimeout(()=>flash.classList.remove('show'), 120);
+
+      return canvas.toDataURL('image/jpeg', 0.92);
+    }
+
+    async function shootSequence(){
+      startBtn.style.display = 'none';
+
+      // 第一張
+      tip.innerHTML = '請和角色一起擺出 <strong>動作 1</strong>';
+      await countdown();
+      shots.one = capture();
+
+      // 換角色 → 第二張
+      charImg.src = poses[1].img;
+      await sleep(350);
+      tip.innerHTML = '請和角色一起擺出 <strong>動作 2</strong>';
+      await countdown();
+      shots.two = capture();
+
+      // 存起來 → 前往輸出頁
+      localStorage.setItem('photobooth_shots', JSON.stringify(shots));
+      window.location.href = 'booth-export.html';
+    }
+
+    // iOS 需要由使用者觸發才能啟動相機
+    startBtn.addEventListener('click', async ()=>{
+      await startCamera();
+      await sleep(300);
+      shootSequence();
+    });
+
+    // App 退到背景就關掉相機，回來再重開
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.hidden && stream){ stream.getTracks().forEach(t=>t.stop()); }
+    });
+  </script>
+</body>
+</html>

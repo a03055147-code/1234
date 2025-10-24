@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>第二階段｜情境背景</title>
+
+  <!-- iOS 全螢幕 / 加到主畫面 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="What's in Your Hand?">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iPad 最佳化 viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* 沉浸式：禁選取/長按/橡皮筋捲動 */
+    html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:none;background:#ffffff;color:#3b3f44;}
+    *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+
+    /* 等比縮放到 1366×1024 舞台 */
+    .outer{width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;}
+    .fit{width:1366px;height:1024px;transform-origin:top left;transform:scale(calc(min(100vw/1366,100vh/1024)));}
+
+    :root{ --bg:#ffffff; --text:#3b3f44; --muted:#6b7076; --pill:#bfefff; --pill-hover:#a8e6ff; }
+    body{font-family:"Manrope","Noto Sans TC",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;}
+
+    .stage{width:1366px;height:1024px;position:relative;background:var(--bg);}
+    /* 左側文字塊 */
+    .wrap{position:absolute;left:96px;top:196px;width:700px;}
+    .intro{font-weight:900;font-size:36px;line-height:1.9;letter-spacing:.02em;margin:0 0 28px 0;}
+    .nowrap{white-space:nowrap;}
+
+    .cta{
+      display:inline-block;padding:16px 32px;border-radius:18px;background:var(--pill);color:#1f2a33;
+      text-decoration:none;font-weight:900;font-size:28px;
+      box-shadow:0 6px 0 rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.06);
+      transition:transform .08s ease, background .15s ease, box-shadow .15s ease;
+    }
+    .cta:hover{background:var(--pill-hover);transform:translateY(-1px);box-shadow:0 7px 0 rgba(0,0,0,.12),0 14px 36px rgba(0,0,0,.08)}
+    .cta:active{transform:translateY(1px);box-shadow:0 4px 0 rgba(0,0,0,.12),0 8px 20px rgba(0,0,0,.06)}
+  </style>
+</head>
+<body>
+  <div class="outer">
+    <div class="stage fit">
+      <div class="wrap">
+        <p id="intro" class="intro"></p>
+        <a id="cta" class="cta" href="stage2.html">開始</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 讀第一階段分數；也可用 ?force=extravert 測試
+    const base = JSON.parse(localStorage.getItem('handname_scores')||'{}');
+    const TYPES = ['extravert','introvert','caring','decisive','analytic'];
+    const force = new URLSearchParams(location.search).get('force');
+
+    function bestType(){
+      if(force && TYPES.includes(force)) return force;
+      let best='extravert', val=-Infinity;
+      TYPES.forEach(k=>{ const v=base[k]||0; if(v>val){best=k;val=v;} });
+      return best;
+    }
+    const tKey = bestType();
+
+    // 原始文案
+    const INTROS = {
+      extravert: `你推開門，耀眼的光線閃了你一下。
+當視線恢復，眼前是一個盛大的派對，
+音樂從地面震起，大家隨著音樂跳舞。
+有人衝著你比出「Hi！」的手語，
+也有人比出「一起玩吧！」「歡迎你」的動作。`,
+      introvert: `推開門後，你進入一個寧靜的花園，
+微光透過樹葉灑下斑駁光影，發出河水潺潺的聲音。
+幾個人安靜地在花園裡喝茶、看書。`,
+      caring: `推開門，
+你進到一個巨大的空間，
+空間裡有很多碎片和光點拼湊在一起，
+旁邊的人告訴你這是掌管居民情緒的檔案室，
+而每一個光點，
+都記錄著居民的心情。
+他遞給你一個空瓶，
+要你一起幫忙整理。`,
+      decisive: `推開門，你走進冒險遊戲場景，
+這裡在考驗你的勇氣和決斷力。`,
+      analytic: `推開門，你來到一個工坊，
+牆上掛滿組件、線路與轉輪，
+大家都忙著手邊的工作，一位師父遞給你工作服，請你開始研究。`
+    };
+
+    // 按鈕文字（依你的指定）
+    const CTA_TEXT = {
+      extravert:'加入派對',
+      introvert:'進入花園',
+      caring:'接住空瓶',
+      decisive:'前往冒險',
+      analytic:'開始研究'
+    };
+
+    // 逗號、句號自動換行（但關懷溫暖已手動斷好，不再重處理）
+    function formatLines(txt){
+      return txt.replaceAll(/([，。])/g, '$1<br>').replace(/<br>$/,'');
+    }
+
+    const introEl = document.getElementById('intro');
+    let html = INTROS[tKey];
+
+    if (tKey === 'caring') {
+      // 已是你指定的逐行分段，不再替換
+      html = html.replace(/\n/g,'<br>');
+    } else {
+      html = formatLines(html);
+      // 外向活力：讓最後這句維持同一行
+      if (tKey === 'extravert') {
+        const target = '也有人比出「一起玩吧！」「歡迎你」的動作。';
+        html = html.replace(target, `<span class="nowrap">${target}</span>`);
+      }
+    }
+
+    introEl.innerHTML = html;
+
+    // 設定按鈕文案
+    const cta = document.getElementById('cta');
+    cta.textContent = CTA_TEXT[tKey];
+
+    // 寫入分流供第二階段題目頁使用
+    sessionStorage.setItem('handname_stage2_type', tKey);
+
+    // 保留 force 參數到下一頁（方便測試）
+    const qs = window.location.search;
+    if(qs) cta.href = 'stage2.html'+qs;
+  </script>
+</body>
+</html>
