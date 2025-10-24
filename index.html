@@ -28,8 +28,8 @@
 
     /* 舞台縮放到 1366×1024，改以中心為原點 + 使用 --vh 修正 iOS 的 100vh 問題 */
     .fit{
-      width:1366px;
-      height:1024px;
+      width:1024px;
+      height:768px;
       transform-origin:center center;
       transform: scale(calc(min(100vw/1366, (var(--vh, 1vh) * 100)/1024)));
     }
