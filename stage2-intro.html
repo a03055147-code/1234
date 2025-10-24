@@ -70,7 +70,7 @@
     }
     const tKey = bestType();
 
-    // 原始文案
+    // 文案
     const INTROS = {
       extravert: `你推開門，耀眼的光線閃了你一下。
 當視線恢復，眼前是一個盛大的派對，
@@ -83,11 +83,9 @@
       caring: `推開門，
 你進到一個巨大的空間，
 空間裡有很多碎片和光點拼湊在一起，
-旁邊的人告訴你這是掌管居民情緒的檔案室，
-而每一個光點，
-都記錄著居民的心情。
-他遞給你一個空瓶，
-要你一起幫忙整理。`,
+旁邊的人說這是掌管居民情緒的檔案室，
+而每一個光點，都記錄著居民的心情。
+他遞給你一個空瓶，要你一起幫忙整理。`,
       decisive: `推開門，你走進冒險遊戲場景，
 這裡在考驗你的勇氣和決斷力。`,
       analytic: `推開門，你來到一個工坊，
@@ -95,7 +93,7 @@
 大家都忙著手邊的工作，一位師父遞給你工作服，請你開始研究。`
     };
 
-    // 按鈕文字（依你的指定）
+    // 按鈕文字
     const CTA_TEXT = {
       extravert:'加入派對',
       introvert:'進入花園',
@@ -113,7 +111,7 @@
     let html = INTROS[tKey];
 
     if (tKey === 'caring') {
-      // 已是你指定的逐行分段，不再替換
+      // 依你要求的逐行分段
       html = html.replace(/\n/g,'<br>');
     } else {
       html = formatLines(html);
@@ -123,19 +121,19 @@
         html = html.replace(target, `<span class="nowrap">${target}</span>`);
       }
     }
-
     introEl.innerHTML = html;
 
     // 設定按鈕文案
     const cta = document.getElementById('cta');
     cta.textContent = CTA_TEXT[tKey];
 
-    // 寫入分流供第二階段題目頁使用
-    sessionStorage.setItem('handname_stage2_type', tKey);
-
-    // 保留 force 參數到下一頁（方便測試）
-    const qs = window.location.search;
-    if(qs) cta.href = 'stage2.html'+qs;
+    // --- 重要修正：點擊時先寫入 sessionStorage，再跳頁 ---
+    const qs = window.location.search || '';
+    cta.addEventListener('click', (e)=>{
+      e.preventDefault();
+      sessionStorage.setItem('handname_stage2_type', tKey);
+      window.location.href = 'stage2.html' + qs;
+    });
   </script>
 </body>
 </html>
